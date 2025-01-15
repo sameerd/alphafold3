@@ -1,2 +1,4 @@
 logs
 *.swp
+save
+.bash_history

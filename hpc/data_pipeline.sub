@@ -5,13 +5,26 @@ log = logs/data_pipeline.log
 output = logs/data_pipeline_$(Cluster).out
 error = logs/data_pipeline_$(Cluster).err
 
-transfer_input_files = data_pipeline.sh, fold_input.json
+transfer_input_files = data_pipeline.sh, inputs/fold_input.json
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
 
 Requirements = (Target.HasCHTCStaging == true)
 
-request_memory = 8GB
-request_disk = 16GB
-request_cpus = 4
+if defined USE_SMALL_DB
+  # testing requirements
+  request_memory = 8GB
+  request_disk = 16GB
+  request_cpus = 4
+  arguments = 1 1
+else
+  # full requirements
+  request_memory = 8GB
+  request_disk = 700GB
+  request_cpus = 8
+  arguments = 0 0
+endif
 
 queue
 

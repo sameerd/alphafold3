@@ -1,17 +1,27 @@
 #!/bin/bash
 
+#set -x
 readonly CWD=$PWD
 
-readonly STAGING_DIR=/staging/dcosta2/af3
-readonly DB_DIR_STUB=db_small
+#readonly DB_DIR_STUB=db_small
 readonly SINGIMG=alphafold3.sif
 
-PRINT_INFO=1
+PRINT_INFO=$1
 function printinfo {
-  if [ ! -z "$PRINT_INFO" ] ; then
+  if [[ "$PRINT_INFO" -ne 0 ]] ; then
     echo $1
   fi
 }
+printinfo "Checking if printinfo is on"
+
+readonly STAGING_DIR=/staging/dcosta2/af3
+if [[ "$2" -eq 0 ]];
+then
+  readonly DB_DIR_STUB=db
+else
+  readonly DB_DIR_STUB=db_small
+fi
+printinfo "Setting up database : $DB_DIR_STUB"
 
 readonly STAGING_DB_DIR="${STAGING_DIR}/${DB_DIR_STUB}"
 
