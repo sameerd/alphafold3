@@ -1,4 +1,6 @@
 logs
-*.swp
 save
 .bash_history
+
+*.tar.gz
+*.swp
