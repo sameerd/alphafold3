@@ -1,0 +1,18 @@
+universe = vanilla
+executable = data_pipeline.sh
+
+log = logs/data_pipeline.log
+output = logs/data_pipeline_$(Cluster).out
+error = logs/data_pipeline_$(Cluster).err
+
+transfer_input_files = data_pipeline.sh, fold_input.json
+
+Requirements = (Target.HasCHTCStaging == true)
+
+request_memory = 8GB
+request_disk = 16GB
+request_cpus = 4
+
+queue
+
+
