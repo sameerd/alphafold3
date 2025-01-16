@@ -854,6 +854,12 @@ class Input:
   def ligands(self) -> Sequence[Ligand]:
     return [chain for chain in self.chains if isinstance(chain, Ligand)]
 
+  def sanitised_name(self) -> str:
+    """Returns sanitised version of the name that can be used as a filename."""
+    lower_spaceless_name = self.name.lower().replace(' ', '_')
+    allowed_chars = set(string.ascii_lowercase + string.digits + '_-.')
+    return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
+
   @classmethod
   def from_alphafoldserver_fold_job(cls, fold_job: Mapping[str, Any]) -> Self:
     """Constructs Input from an AlphaFoldServer fold job."""
@@ -1305,11 +1311,17 @@ class Input:
     ]
     return dataclasses.replace(self, chains=with_missing_fields)
 
-  def sanitised_name(self) -> str:
-    """Returns sanitised version of the name that can be used as a filename."""
-    lower_spaceless_name = self.name.lower().replace(' ', '_')
-    allowed_chars = set(string.ascii_lowercase + string.digits + '_-.')
-    return ''.join(l for l in lower_spaceless_name if l in allowed_chars)
+  def with_multiple_seeds(self, num_seeds: int) -> Self:
+    """Returns a copy of the input with num_seeds rng seeds."""
+    if num_seeds <= 1:
+      raise ValueError('Number of seeds must be greater than 1.')
+    if len(self.rng_seeds) != 1:
+      raise ValueError('Input must have one rng seed to set multiple seeds.')
+
+    return dataclasses.replace(
+        self,
+        rng_seeds=list(range(self.rng_seeds[0], self.rng_seeds[0] + num_seeds)),
+    )
 
 
 def load_fold_inputs_from_path(json_path: pathlib.Path) -> Iterator[Input]:

@@ -219,7 +219,7 @@ class InferenceTest(test_utils.StructureTestCase):
     with self.assertRaisesRegex(ValueError, 'missing unpaired MSA.'):
       run_alphafold.process_fold_input(
           fold_input=folding_input.Input.from_json(self._test_input_json),
-          # No data pipeline config, so featursation will run first, and fail
+          # No data pipeline config, so featurisation will run first, and fail
           # since the input is missing MSAs.
           data_pipeline_config=None,
           model_runner=self._runner,
