@@ -13,7 +13,10 @@ function printinfo {
 }
 printinfo "Checking if printinfo is on"
 
-readonly STAGING_DIR=/staging/dcosta2/af3
+readonly STAGING_DIR=/staging/groups/glbrc_alphafold/af3
+
+# this file should be protected by your file permissions
+readonly MODEL_WEIGHTS_FILE=/staging/dcosta2/af3/weights/af3.bin
 
 mkdir work
 pushd work
@@ -32,9 +35,13 @@ done
 cp "${STAGING_DIR}"/${SINGIMG} .
 
 printinfo "Extracting model weights"
-cat "${STAGING_DIR}"/weights/af3.bin.zst  | \
+if [[ ${MODEL_WEIGHTS_FILE} == *.zst ]]; then
+  cat "${MODEL_WEIGHTS_FILE}"  | \
         apptainer exec ${SINGIMG} \
         zstd  --decompress > models/af3.bin
+else
+  cp "${MODEL_WEIGHTS_FILE}" models/af3.bin
+fi
 
 apptainer exec \
    --bind af_input:/root/af_input \
@@ -56,7 +63,9 @@ apptainer exec \
 popd
 
 # tar up the output directory - one tar for each job. These get returned
-for output_name in work/af_output/*
+
+shopt -s nullglob # we do not an empty match below
+for output_name in work/af_output/* ;
 do
   output_name_base="${output_name##*/}"
   printinfo "Compressing : $output_name_base"

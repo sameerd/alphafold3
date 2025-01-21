@@ -3,7 +3,6 @@
 #set -x
 readonly CWD=$PWD
 
-#readonly DB_DIR_STUB=db_small
 readonly SINGIMG=alphafold3.sif
 
 PRINT_INFO=$1
@@ -14,7 +13,7 @@ function printinfo {
 }
 printinfo "Checking if printinfo is on"
 
-readonly STAGING_DIR=/staging/dcosta2/af3
+readonly STAGING_DIR=/staging/groups/glbrc_alphafold/af3
 if [[ "$2" -eq 0 ]];
 then
   readonly DB_DIR_STUB=db
