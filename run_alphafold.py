@@ -240,10 +240,28 @@ _FLASH_ATTENTION_IMPLEMENTATION = flags.DEFINE_enum(
         ' across GPU devices.'
     ),
 )
+_NUM_RECYCLES = flags.DEFINE_integer(
+    'num_recycles',
+    10,
+    'Number of recycles to use during inference.',
+    lower_bound=1,
+)
 _NUM_DIFFUSION_SAMPLES = flags.DEFINE_integer(
     'num_diffusion_samples',
     5,
     'Number of diffusion samples to generate.',
+    lower_bound=1,
+)
+_NUM_SEEDS = flags.DEFINE_integer(
+    'num_seeds',
+    None,
+    'Number of seeds to use for inference. If set, only a single seed must be'
+    ' provided in the input JSON. AlphaFold 3 will then generate random seeds'
+    ' in sequence, starting from the single seed specified in the input JSON.'
+    ' The full input JSON produced by AlphaFold 3 will include the generated'
+    ' random seeds. If not set, AlphaFold 3 will use the seeds as provided in'
+    ' the input JSON.',
+    lower_bound=1,
 )
 
 # Output controls.
@@ -258,6 +276,7 @@ def make_model_config(
     *,
     flash_attention_implementation: attention.Implementation = 'triton',
     num_diffusion_samples: int = 5,
+    num_recycles: int = 10,
     return_embeddings: bool = False,
 ) -> model.Model.Config:
   """Returns a model config with some defaults overridden."""
@@ -266,6 +285,7 @@ def make_model_config(
       flash_attention_implementation
   )
   config.heads.diffusion.eval.num_samples = num_diffusion_samples
+  config.num_recycles = num_recycles
   config.return_embeddings = return_embeddings
   return config
 
@@ -682,6 +702,12 @@ def main(_):
               ' https://developer.nvidia.com/cuda-gpus) the ENV XLA_FLAGS must'
               f' include "{required_flag}".'
           )
+        if _FLASH_ATTENTION_IMPLEMENTATION.value != 'xla':
+          raise ValueError(
+              'For devices with GPU compute capability 7.x (see'
+              ' https://developer.nvidia.com/cuda-gpus) the'
+              ' --flash_attention_implementation must be set to "xla".'
+          )
 
   notice = textwrap.wrap(
       'Running AlphaFold 3. Please note that standard AlphaFold 3 model'
@@ -738,6 +764,7 @@ def main(_):
                 attention.Implementation, _FLASH_ATTENTION_IMPLEMENTATION.value
             ),
             num_diffusion_samples=_NUM_DIFFUSION_SAMPLES.value,
+            num_recycles=_NUM_RECYCLES.value,
             return_embeddings=_SAVE_EMBEDDINGS.value,
         ),
         device=devices[_GPU_DEVICE.value],
@@ -751,6 +778,11 @@ def main(_):
   num_fold_inputs = 0
   for fold_input in fold_inputs:
     print(f'Processing fold input #{num_fold_inputs + 1}')
+    if _NUM_SEEDS.value is not None:
+      print(
+          f'Expanding fold input {fold_input.name} to {_NUM_SEEDS.value} seeds'
+      )
+      fold_input = fold_input.with_multiple_seeds(_NUM_SEEDS.value)
     process_fold_input(
         fold_input=fold_input,
         data_pipeline_config=data_pipeline_config,
