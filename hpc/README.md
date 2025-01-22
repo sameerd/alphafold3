@@ -12,7 +12,7 @@ apptainer container (5GB) in two pipelines.
 
 ## **Important Notes**
 
-* *Obtain the Alphafold3 model parameters first*: The inference pipeline needs
+* **Obtain the Alphafold3 model parameters first**: The inference pipeline needs
   [your own copy of the Model
   Parameters](../README.md#obtaining-model-parameters) to run. Google Deepmind
   has terms of use and you need to agree to these, download and save the
@@ -20,13 +20,13 @@ apptainer container (5GB) in two pipelines.
   protected by your own file permissions and then edit `MODEL_PARAM_FILE`
   variable in the [inference pipeline execute script](./inference_pipeline.sh)
   to point to it. 
-* *Batch jobs to avoid using excess CHTC resouces*: Contrary to the usual CHTC
+* **Batch jobs to avoid using excess CHTC resouces**: Contrary to the usual CHTC
   approach of slicing jobs finely we need to batch jobs as much as possible to
   avoid transferring too much data to/from the staging directory. It is
   possible to put multiple json config files in the input directories
   [data_inputs](./data_inputs/) and [inference_inputs](./inference_inputs/) and
   run them all at the same time. 
-* *Avoid coping data*: The apptainer container and the databases in
+* **Avoid coping data**: The apptainer container and the databases in
   `/staging/groups/glbrc_alphafold/af3/` are created and downloaded from public
   sources and are readable by anyone who can access the staging directory. This
   is done so that there is no need to make any copies of this data on the
@@ -75,9 +75,19 @@ the apptainer container or the databases
 
 
 ### Creating the apptainer container
+The latest version of the apptainer container is stored at
+`/staging/groups/glbrc_alphafold/af3/alphafold3.sif` and the commands below are
+just in case anyone needs to build it for themselves. This container is built
+using the Google Deepmind Alphafold3 publically available code and it's use
+should be governed by the same terms of use. 
 
 ```shell
-# TODO document this when building an updated version of the container
+# Build the container on your own machine (if you want to)
+# Docker needs around 11GB of memory to run
+sudo docker build -t alphafold3 -f docker/Dockerfile .
+# apptainer needs a lot less memory but needs around 30GB of disk space 
+# mostly in it's tmp directory. Can be set with APPTAINER_CACHE and TMPDIR
+sudo apptainer build alphafold3.sif docker-daemon://alphafold3:latest
 ```
 
 ### Creating small databases for testing
