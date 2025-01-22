@@ -5,7 +5,7 @@ log = logs/inference_pipeline.log
 output = logs/inference_pipeline_$(Cluster).out
 error = logs/inference_pipeline_$(Cluster).err
 
-transfer_input_files = data_pipeline.sh, inference_inputs/2pv7.data_pipeline.tar.gz
+transfer_input_files = inference_inputs/
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
@@ -25,5 +25,4 @@ gpus_minimum_capability = 8.0
 arguments = 1 
 
 queue
-
 

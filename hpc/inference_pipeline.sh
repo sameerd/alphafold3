@@ -16,7 +16,7 @@ printinfo "Checking if printinfo is on"
 readonly STAGING_DIR=/staging/groups/glbrc_alphafold/af3
 
 # this file should be protected by your file permissions
-readonly MODEL_WEIGHTS_FILE=/staging/dcosta2/af3/weights/af3.bin
+readonly MODEL_PARAM_FILE=/staging/dcosta2/af3/weights/af3.bin
 
 mkdir work
 pushd work
@@ -34,13 +34,14 @@ done
 ## copy the container
 cp "${STAGING_DIR}"/${SINGIMG} .
 
-printinfo "Extracting model weights"
-if [[ ${MODEL_WEIGHTS_FILE} == *.zst ]]; then
-  cat "${MODEL_WEIGHTS_FILE}"  | \
+if [[ ${MODEL_PARAM_FILE} == *.zst ]]; then
+  cat "${MODEL_PARAM_FILE}"  | \
         apptainer exec ${SINGIMG} \
         zstd  --decompress > models/af3.bin
+  printinfo "Decompressing model weights"
 else
-  cp "${MODEL_WEIGHTS_FILE}" models/af3.bin
+  cp "${MODEL_PARAM_FILE}" models/af3.bin
+  printinfo "Copying model weights"
 fi
 
 apptainer exec \
@@ -64,7 +65,7 @@ popd
 
 # tar up the output directory - one tar for each job. These get returned
 
-shopt -s nullglob # we do not an empty match below
+shopt -s nullglob # we do not want an empty match below
 for output_name in work/af_output/* ;
 do
   output_name_base="${output_name##*/}"

@@ -78,6 +78,7 @@ apptainer exec \
 popd
 
 # tar up the output directory - one tar for each job. These get returned
+shopt -s nullglob # we do not want an empty match below
 for output_name in work/af_output/*
 do
   output_name_base="${output_name##*/}"
