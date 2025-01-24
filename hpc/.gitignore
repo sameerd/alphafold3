@@ -4,3 +4,10 @@ save
 
 *.tar.gz
 *.swp
+*.sif
+
+include
+lib
+share
+
+test_*

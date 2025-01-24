@@ -39,7 +39,8 @@ wheel.exclude = [
     "**.pyx",
     "**/CMakeLists.txt",
     "**.cc",
-    "**.h"
+    "**.h",
+    "featurised_example.pkl"
 ]
 sdist.include = [
     "LICENSE",

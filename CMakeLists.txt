@@ -54,6 +54,10 @@ FetchContent_Declare(
   GIT_TAG 57560472b4260dc41f457706bc45fc6ef0bc0f10 # v4.4.7
   EXCLUDE_FROM_ALL)
 
+# EDIT: added for hpc compatiblity
+include_directories( ${CMAKE_SOURCE_DIR}/hpc/include )
+link_directories( ${CMAKE_SOURCE_DIR}/hpc/lib )
+
 FetchContent_MakeAvailable(pybind11 abseil-cpp pybind11_abseil cifpp dssp)
 
 find_package(
