@@ -53,7 +53,8 @@ apptainer container (5GB) in two pipelines.
 4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sh` to point
    to the model parameters you got from Google Deepmind in Step 1. 
 5. Put the config `json` files in the in the [data_inputs/](./data_inputs/) 
-   directory. An example config to test is available as `fold_input.json` in
+   directory. An example config to test is available as 
+   [`fold_input.json`](./test/input/fold_input.json) in
    the [(README.md file for Alphafold3](../README.md)
 6. Run a test with the small databases first
    ```shell

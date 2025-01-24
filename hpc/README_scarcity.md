@@ -51,7 +51,27 @@ conda env config vars set XLA_FLAGS="--xla_disable_hlo_passes=custom-kernel-fusi
 # for later capability GPUs we can set the flag below
 # XLA_FLAGS="--xla_gpu_enable_triton_gemm=false"
 # reactivate the environment to get the environment variable to get set
+
+conda env config vars set XLA_PYTHON_CLIENT_PREALLOCATE=true
+conda env config vars set XLA_CLIENT_MEM_FRACTION=0.95
+
 mamba deactivate
 mamba activate AF3
+
+```
+
+## testing
+
+```shell
+mamba activate AF3
+
+python run_alphafold.py \
+     --db_dir=$HOME/databases/alphafold3_public_databases \
+     --model_dir=$HOME/software/alphafold3_weights \
+     --run_data_pipeline=true \
+     --run_inference=true \
+     --flash_attention_implementation=xla \
+     --input_dir=hpc/test/input \
+     --output_dir=hpc/test/output
 
 ```
