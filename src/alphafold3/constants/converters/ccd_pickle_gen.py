@@ -40,6 +40,7 @@ def main(argv: Sequence[str]) -> None:
       )
   }
   assert len(result) == whole_file.count(b'data_')
+  del whole_file # for us MEM poors
 
   print(f'Writing {output_file}', flush=True)
   with open(output_file, 'wb') as f:
