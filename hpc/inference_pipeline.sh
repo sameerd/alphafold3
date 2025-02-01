@@ -1,31 +1,78 @@
 #!/bin/bash
 
-#set -x
-readonly CWD=$PWD
+set -x
+
+# STAGING_DIR is used to find the Singularity image (and databases)
+# It is not used if this script is run inside a container
+# Also, since this script does inference only, it doesn't need the databases
+# this varible doesn't need to be changed
 readonly STAGING_DIR=/staging/groups/glbrc_alphafold/af3
 
+# SINGIMG is used if we want to find a container. The script will 
+# first look in a local directory and then the staging directory for it.
 SINGIMG=""
 
 # this file should be protected by your staging dir unix permissions
+# can also set it with --model_param_file script option 
+# or change it in the line below
 MODEL_PARAM_FILE=/staging/dcosta2/af3/weights/af3.bin
 
-PRINT_INFO=0
-function printinfo {
-  if [[ "$PRINT_INFO" -ne 0 ]] ; then
-    echo $1
+# by default we copy containers and params to a working directory 
+# on the local execute node. If working off a single file system 
+# (scarcity) we can turn this off with --no_copy
+COPY_BINARIES=1
+
+VERBOSE_LEVEL=1 # 0 = silent, 1 = info, 2 = verbose
+
+# by default we create a working directory called work.random
+# Ideally this should be set to 
+# --work_dir_ext $(ClusterId)_$(ProcID)  in the submit file
+# but not needed if we are sure that multiple copies of this script
+# will not overwrite each other
+WORK_DIR_EXT="random"
+
+
+function printstd() { echo "$@"; }
+function printerr() { echo "ERROR: $@" 1>&2; }
+
+function printinfo() {
+  if [[ $VERBOSE_LEVEL -ge 1 ]]; then
+    printstd "INFO: $@"
+  fi
+}
+function printverbose() {
+  if [[ $VERBOSE_LEVEL -ge 2 ]]; then
+    printstd "DEBUG: $@"
   fi
 }
 
+ARGS="$@"
+
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -p|--printinfo)
-      PRINT_INFO=1
-      printinfo "Setting printinfo on"
+     -w|--work_dir_ext)
+      WORK_DIR_EXT="$2"
+      printinfo "Setting WORK_DIR_EXT : ${WORK_DIR_EXT}"
       shift # past argument
       ;;
-    -r|--run_in_container)
+     -v|--verbose)
+      VERBOSE=2
+      printinfo "Setting PRINT_SUMMARY and VERBOSE on"
+      shift # past argument
+      ;;
+     -s|--silent)
+      VERBOSE=0
+      printinfo "Setting PRINT_SUMMARY and VERBOSE off" # this will not print
+      shift # past argument
+      ;;
+     -n|--no_copy)
+      COPY_BINARIES=0
+      printinfo "Not copying singularity container or model parameters"
+      shift # past argument
+      ;;
+    -c|--container)
       SINGIMG="$2"
-      printinfo "Will copy container $SINGIMG and run inside it"
+      printinfo "Will run inside container: $SINGIMG"
       shift # past argument
       shift # past value
       ;;
@@ -35,89 +82,157 @@ while [[ $# -gt 0 ]]; do
       shift # past value
       ;;
     -*|--*)
-      echo "Unknown option $1"
+      printerr "Unknown option $1"
       exit 1
       ;;
   esac
 done
 
+printinfo "Script         : $0"
+printinfo "Running on     : `whoami`@`hostname`"
+printinfo "Arguments      : $ARGS"
+printinfo "Script dir     : $(dirname $0)"
 
 
-mkdir -p work
-pushd work
+readonly WORK_DIR="work.${WORK_DIR_EXT}"
 
+printinfo "WORK_DIR   : `realpath $WORK_DIR`"
+printverbose "Creating workdir and subdirectories : ${WORK_DIR}"
+mkdir -p "${WORK_DIR}"
+pushd "${WORK_DIR}" > /dev/null
 mkdir -p af_input af_output models public_databases
+popd
 
-# prepare input directory
-for filename in ../*.data_pipeline.tar.gz ;
-do
- printinfo "Extracting : ${filename}"
- tar zxf "${filename}" -C af_input/
- rm "${filename}"
-done
+readonly WORK_INPUT_DIR="${WORK_DIR}/af_input"
+# check that input files exist in the INPUT_DIR
+printverbose "Extracting input files to : ${WORK_INPUT_DIR}" 
+if compgen -G "*.data_pipeline.tar.gz"  > /dev/null; then
+  # prepare input directory by expanding all the outputs from the data pipeline
+  for filename in *.data_pipeline.tar.gz ;
+  do
+   printverbose "Extracting to WORK_INPUT_DIR : ${filename}"
+   tar zxf "${filename}" -C ${WORK_INPUT_DIR}/
+   rm "${filename}" # cleanup so that this file isn't accidentally sent back
+  done
+else
+  printerr "Cannot find any input files matching " \
+           "*.data_pipeline.tar.gz in directory : $(dirname $0)"
+  exit 1
+fi
 
 ## copy the container if we are going to run commands inside it
-IMGEXEC="" # default is to not pipe commands through container
+IMG_EXE_CMD="" # default is to not pipe commands through container
+SINGIMG_PATH=""
 if [[ -n "$SINGIMG" ]] ; then
-  printinfo "Copying container : $SINGIMG"
-  cp "${STAGING_DIR}"/${SINGIMG} .
-  IMGEXEC="apptainer exec ${SINGIMG}"
+  printverbose "Calling apptainer externally : ${SINGIMG}"
+  if [[ "$COPY_BINARIES" -ne 0 ]] ; then
+    printverbose "Copying container to WORK_DIR"
+    if [ -f "$SINGIMG" ]; then 
+      printverbose "Copying container from local directory"
+      cp "${SINGIMG}" "${WORK_DIR}"/
+      SINGIMG_PATH="${WORK_DIR}/${SINGIMG}"
+    else # container is not in the local directory, check if it is in staging
+      if [ -f ${STAGING_DIR}/${SINGIMG} ]; then
+        printverbose "Copying container from staging directory"
+        cp "${STAGING_DIR}/${SINGIMG}" "${WORK_DIR}"/ 
+        SINGIMG_PATH="${WORK_DIR}/${SINGIMG}"
+      else #not in staging
+        printerr "Cannot find container to copy : $SINGIMG"
+        exit 1
+      fi # SINGIMG is not available to copy
+    fi
+  else # Do not copy binaries
+    if [ -f "$SINGIMG" ]; then 
+      printverbose "Container found. Not copying to workdir : $SINGIMG"
+      SINGIMG_PATH="${SINGIMG}"
+    else # container not found
+      printerr "Trying to run in container (not found) : $SINGIMG"
+      exit 1
+    fi
+  fi
+  IMG_EXE_CMD="apptainer exec --nv ${SINGIMG_PATH}"
 else
-  printinfo "Running inside the container : not copying container"
+  printverbose "Not calling apptainer as we are inside the container"
 fi
 
+printinfo "SINGIMG_PATH   : $SINGIMG_PATH"
+printinfo "IMG_EXE_CMD    : $IMG_EXE_CMD"
+
+MODEL_PARAM_DIR=`realpath ${WORK_DIR}/models`
 if [[ ${MODEL_PARAM_FILE} == *.zst ]]; then
   cat "${MODEL_PARAM_FILE}"  | \
-        ${IMGEXEC} zstd  --decompress > models/af3.bin
-  printinfo "Decompressing model weights : ${MODEL_PARAM_FILE}"
+        ${IMG_EXE_CMD} zstd  --decompress > ${WORK_DIR}/models/af3.bin
+  printverbose "Decompressing model weights : ${MODEL_PARAM_FILE}"
 else
-  cp "${MODEL_PARAM_FILE}" models/af3.bin
-  printinfo "Copying model weights : ${MODEL_PARAM_FILE}"
+  if [[ "$COPY_BINARIES" -ne 0 ]] ; then
+    cp "${MODEL_PARAM_FILE}" ${WORK_DIR}/models/af3.bin
+    printverbose "Copying model weights to workdir: ${MODEL_PARAM_FILE}"
+  else
+    printverbose "Not copying model weights"
+    MODEL_PARAM_DIR=$(dirname ${MODEL_PARAM_FILE})
+  fi
+fi
+printinfo "MODEL_PARAM_DIR: ${MODEL_PARAM_DIR}"
+
+# Extra hand holding for CUDA_CAPABILITY 7.x devices
+PYTHON_CC_EXEC_STR="import jax;
+print(jax.local_devices(backend='gpu')[0].compute_capability)"
+CUDA_CAPABILITY=`${IMG_EXE_CMD} python -c "${PYTHON_CC_EXEC_STR}"`
+printinfo "CUDA_CAPABILITY: $CUDA_CAPABILITY"
+EXTRA_RUN_ALPHAFOLD_FLAGS=""
+EXTRA_APPTAINER_ENV=" " # add a space here so it isn't an empty newline below
+if [  ${CUDA_CAPABILITY%.*} -eq 7 ] ; then
+  printverbose "Setting extra flags for CUDA_CAPABILITY 7.x devices"
+  EXTRA_RUN_ALPHAFOLD_FLAGS="--flash_attention_implementation=xla"
+  export XLA_FLAGS="--xla_disable_hlo_passes=custom-kernel-fusion-rewriter"
+  EXTRA_APPTAINER_ENV="--env XLA_FLAGS=${XLA_FLAGS}"
 fi
 
-if [[ -n "$SINGIMG" ]] ; then
+printinfo "EXTRA_RUN_ALPHAFOLD_FLAGS: $EXTRA_RUN_ALPHAFOLD_FLAGS"
+printinfo "EXTRA_APPTAINER_ENV      : $EXTRA_APPTAINER_ENV"
+
+if [[ -n "$SINGIMG" ]] ; then # use apptainer to run the container
   apptainer exec \
-     --bind af_input:/root/af_input \
-     --bind af_output:/root/af_output \
-     --bind models:/root/models \
-     --bind public_databases:/root/public_databases \
+     --bind "${WORK_DIR}/af_input":/root/af_input \
+     --bind "${WORK_DIR}/af_output":/root/af_output \
+     --bind "${MODEL_PARAM_DIR}":/root/models \
+     --bind "${WORK_DIR}/public_databases":/root/public_databases \
+     ${EXTRA_APPTAINER_ENV} \
      --cwd /app/alphafold \
      --nv \
-     ${SINGIMG} \
+     ${SINGIMG_PATH} \
      python run_alphafold.py \
      --db_dir=/root/public_databases \
      --model_dir=/root/models \
      --run_data_pipeline=false \
      --run_inference=true \
      --input_dir=/root/af_input \
-     --output_dir=/root/af_output
-else
-  workdir=`realpath .`
+     --output_dir=/root/af_output \
+     $EXTRA_RUN_ALPHAFOLD_FLAGS   
+else # we must already be in the container
+  WORK_DIR_FULL_PATH=`realpath ${WORK_DIR}` # full path to working directory
   pushd /app/alphafold
   python run_alphafold.py \
-       --db_dir=${workdir}/public_databases \
-       --model_dir=${workdir}/models \
+       --db_dir="${WORK_DIR_FULL_PATH}/public_databases" \
+       --model_dir="${MODEL_PARAM_DIR}" \
        --run_data_pipeline=false \
        --run_inference=true \
-       --input_dir=${workdir}/af_input \
-       --output_dir=${workdir}/af_output
-  popd # back to workdir
+       --input_dir="${WORK_DIR_FULL_PATH}/af_input" \
+       --output_dir="${WORK_DIR_FULL_PATH}/af_output" \
+       $EXTRA_RUN_ALPHAFOLD_FLAGS #
+  popd # back to execution directory
 fi
 
-popd # back to home dir
-
-
-# tar up the output directory - one tar for each job. These get returned
-
+printverbose "Finished running Alphafold3. Packing up output dir"
 shopt -s nullglob # we do not want an empty match below
-for output_name in work/af_output/* ;
+for output_dir in "${WORK_DIR}/af_output"/*/ ;
 do
-  output_name_base="${output_name##*/}"
-  printinfo "Compressing : $output_name_base"
-  tar zcf "${output_name_base}".inference_pipeline.tar.gz -C "${output_name}" .
+  output_name_base="$(basename ${output_dir})"
+  printverbose "Compressing : $output_name_base"
+  tar zcf "${output_name_base}".inference_pipeline.tar.gz -C "${output_dir}" .
 done
 
 # clean up
-rm -rf work
+rm -rf "${WORK_DIR}"
 rm -rf .bash_history .bashrc .lesshst .viminfo
 

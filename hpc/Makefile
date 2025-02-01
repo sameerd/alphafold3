@@ -4,6 +4,9 @@ pass:
 clean:
 	rm -f logs/*
 
+deepclean: clean
+	rm -f *.tar.gz
+
 test_data_pipeline:
 	condor_submit USE_SMALL_DB=1 data_pipeline.sub	
 

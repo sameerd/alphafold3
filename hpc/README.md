@@ -85,6 +85,8 @@ should be governed by the same terms of use.
 ```shell
 # Build the container on your own machine (if you want to)
 # Docker needs around 11GB of memory to run
+# On an 8GB machine, enable swapspace of 4GB so that the `build_data` command
+# does not get killed
 sudo docker build -t alphafold3 -f docker/Dockerfile .
 # apptainer needs a lot less memory but needs around 30GB of disk space 
 # mostly in it's tmp directory. Can be set with APPTAINER_CACHE and TMPDIR

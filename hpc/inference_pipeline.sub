@@ -38,8 +38,8 @@ gpus_minimum_capability = 8.0
 +WantGPULab = true
 +is_resumable = true
 
-#arguments = --printinfo  --run_in_container alphafold3.sif --model_param_file /staging/dcosta2/af3/weights/af3.bin
-arguments = --printinfo  --model_param_file /staging/dcosta2/af3/weights/af3.bin
+#arguments = --container alphafold3.sif --model_param_file /staging/dcosta2/af3/weights/af3.bin
+arguments = --model_param_file /staging/dcosta2/af3/weights/af3.bin
 
 queue
 
