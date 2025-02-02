@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+#set -x #for complete debugging
 
 # STAGING_DIR is used to find the Singularity image (and databases)
 # It is not used if this script is run inside a container
@@ -12,19 +12,19 @@ readonly STAGING_DIR=/staging/groups/glbrc_alphafold/af3
 # first look in a local directory and then the staging directory for it.
 SINGIMG=""
 
-# this file should be protected by your staging dir unix permissions
+# This file should be protected by your staging dir unix permissions
 # can also set it with --model_param_file script option 
 # or change it in the line below
 MODEL_PARAM_FILE=/staging/dcosta2/af3/weights/af3.bin
 
-# by default we copy containers and params to a working directory 
+# By default we copy containers and params to a working directory 
 # on the local execute node. If working off a single file system 
 # (scarcity) we can turn this off with --no_copy
 COPY_BINARIES=1
 
 VERBOSE_LEVEL=1 # 0 = silent, 1 = info, 2 = verbose
 
-# by default we create a working directory called work.random
+# By default we create a working directory called work.random
 # Ideally this should be set to 
 # --work_dir_ext $(ClusterId)_$(ProcID)  in the submit file
 # but not needed if we are sure that multiple copies of this script
@@ -203,10 +203,10 @@ if [[ -n "$SINGIMG" ]] ; then # use apptainer to run the container
      ${SINGIMG_PATH} \
      python run_alphafold.py \
      --db_dir=/root/public_databases \
-     --model_dir=/root/models \
      --run_data_pipeline=false \
      --run_inference=true \
      --input_dir=/root/af_input \
+     --model_dir=/root/models \
      --output_dir=/root/af_output \
      $EXTRA_RUN_ALPHAFOLD_FLAGS   
 else # we must already be in the container
@@ -223,7 +223,7 @@ else # we must already be in the container
   popd # back to execution directory
 fi
 
-printverbose "Finished running Alphafold3. Packing up output dir"
+printverbose "Finished running Alphafold3 inference pipeline. Packing up output dir"
 shopt -s nullglob # we do not want an empty match below
 for output_dir in "${WORK_DIR}/af_output"/*/ ;
 do

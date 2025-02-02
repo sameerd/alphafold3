@@ -1,8 +1,8 @@
 
-# setting the universe to vanilla will require --run_in_container argument
+# setting the universe to vanilla will require --container argument
 universe = vanilla
 # comment out the line above and uncomment the line below to run the scripts
-# inside the container. Remove the --run_in_container argument from arguments
+# inside the container. Remove the --container argument from arguments
 #container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.22Jan2025.sif
 
 executable = data_pipeline.sh
@@ -25,15 +25,15 @@ if defined USE_SMALL_DB
   request_memory = 8GB
   request_disk = 16GB
   request_cpus = 4
-  arguments = --printinfo  --run_in_container alphafold3.sif --smalldb
-#  arguments = --printinfo  --smalldb
+  arguments = --container alphafold3.22Jan2025.sif --smalldb --work_dir_ext _$(Cluster)_$(Proc)
+#  arguments = --smalldb --work_dir_ext _$(Cluster)_$(Proc)
 else
   # full requirements
   request_memory = 8GB
   request_disk = 700GB
   request_cpus = 8
-  arguments = --printinfo  --run_in_container alphafold3.sif
-#  arguments = --printinfo
+  arguments = --container alphafold3.22Jan2025.sif --work_dir_ext _$(Cluster)_$(Proc) --extracted_database_path ~/databases/alphafold3_public_databases
+#  arguments = --work_dir_ext _$(Cluster)_$(Proc) 
 endif
 
 #queue

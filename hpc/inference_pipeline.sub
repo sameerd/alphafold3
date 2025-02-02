@@ -1,8 +1,8 @@
 
-# setting the universe to vanilla will require --run_in_container argument
+# setting the universe to vanilla will require --container argument
 #universe = vanilla
 # comment out the line above and uncomment the line below to run the scripts
-# inside the container. Also, remove the --run_in_container argument
+# inside the container. Also, remove the --container argument
 # from arguments
 container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.22Jan2025.sif
 
@@ -38,8 +38,8 @@ gpus_minimum_capability = 8.0
 +WantGPULab = true
 +is_resumable = true
 
-#arguments = --container alphafold3.sif --model_param_file /staging/dcosta2/af3/weights/af3.bin
-arguments = --model_param_file /staging/dcosta2/af3/weights/af3.bin
+#arguments = --container alphafold3.sif --model_param_file /staging/dcosta2/af3/weights/af3.bin --work_dir_ext _$(Cluster)_$(Proc)
+arguments = --model_param_file /staging/dcosta2/af3/weights/af3.bin --work_dir_ext _$(Cluster)_$(Proc)
 
 queue
 
