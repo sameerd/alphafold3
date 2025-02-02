@@ -246,21 +246,38 @@ class ProteinChain:
     """Constructs ProteinChain from the AlphaFoldServer JSON dict."""
     _validate_keys(
         json_dict.keys(),
-        {'sequence', 'glycans', 'modifications', 'count'},
+        {
+            'sequence',
+            'glycans',
+            'modifications',
+            'count',
+            'maxTemplateDate',
+            'useStructureTemplate',
+        },
     )
     sequence = json_dict['sequence']
 
     if 'glycans' in json_dict:
       raise ValueError(
           f'Specifying glycans in the `{ALPHAFOLDSERVER_JSON_DIALECT}` format'
-          ' is not currently supported.'
+          ' is not supported.'
       )
+
+    if 'maxTemplateDate' in json_dict:
+      raise ValueError(
+          f'Specifying maxTemplateDate in the `{ALPHAFOLDSERVER_JSON_DIALECT}`'
+          ' format is not supported, use the --max_template_date flag instead.'
+      )
+
+    templates = None  # Search for templates unless explicitly disabled.
+    if not json_dict.get('useStructureTemplate', True):
+      templates = []  # Do not use any templates.
 
     ptms = [
         (mod['ptmType'].removeprefix('CCD_'), mod['ptmPosition'])
         for mod in json_dict.get('modifications', [])
     ]
-    return cls(id=seq_id, sequence=sequence, ptms=ptms)
+    return cls(id=seq_id, sequence=sequence, ptms=ptms, templates=templates)
 
   @classmethod
   def from_dict(
@@ -756,7 +773,7 @@ def _sample_rng_seed() -> int:
   return random.randint(0, 2**32 - 1)
 
 
-def _validate_user_ccd_keys(keys: Sequence[str]) -> None:
+def _validate_user_ccd_keys(keys: Sequence[str], component_name: str) -> None:
   """Validates the keys of the user-defined CCD dictionary."""
   mandatory_keys = (
       '_chem_comp.id',
@@ -779,7 +796,10 @@ def _validate_user_ccd_keys(keys: Sequence[str]) -> None:
       '_chem_comp_bond.pdbx_aromatic_flag',
   )
   if missing_keys := set(mandatory_keys) - set(keys):
-    raise ValueError(f'User-defined CCD is missing these keys: {missing_keys}')
+    raise ValueError(
+        f'Component {component_name} in the user-defined CCD is missing these'
+        f' keys: {missing_keys}'
+    )
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -835,8 +855,12 @@ class Input:
       object.__setattr__(
           self, 'bonded_atom_pairs', tuple(self.bonded_atom_pairs)
       )
+
     if self.user_ccd is not None:
-      _validate_user_ccd_keys(cif_dict.from_string(self.user_ccd).keys())
+      for component_name, component_cif in cif_dict.parse_multi_data_cif(
+          self.user_ccd
+      ).items():
+        _validate_user_ccd_keys(component_cif.keys(), component_name)
 
   @property
   def protein_chains(self) -> Sequence[ProteinChain]:
