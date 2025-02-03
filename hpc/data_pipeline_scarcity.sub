@@ -3,7 +3,7 @@
 #universe = vanilla
 # comment out the line above and uncomment the line below to run the scripts
 # inside the container. Remove the --container argument from arguments
-container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.22Jan2025.sif
+container_image = file:///mnt/bigdata/linuxhome/dcosta2/software/alphafold3/hpc/alphafold3.22Jan2025.sif
 
 executable = data_pipeline.sh
 
@@ -18,24 +18,20 @@ transfer_input_files = data_inputs/
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
-# We need this to transfer the databases to the execute node
-Requirements = (Target.HasCHTCStaging == true)
-
 if defined USE_SMALL_DB
   # testing requirements
   request_memory = 8GB
   request_disk = 16GB
   request_cpus = 4
-  arguments = --container alphafold3.22Jan2025.sif --smalldb --work_dir_ext _$(Cluster)_$(Process)
-#  arguments = --smalldb --work_dir_ext _$(Cluster)_$(Process)
+  arguments = --smalldb --work_dir_ext _$(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_testing_databases
 else
   # full requirements
   request_memory = 8GB
-  request_disk = 700GB
+  request_disk = 8GB
   request_cpus = 8
-  arguments = --container alphafold3.22Jan2025.sif --work_dir_ext _$(Cluster)_$(Proc) --extracted_database_path ~/databases/alphafold3_public_databases
-#  arguments = --work_dir_ext _$(Cluster)_$(Process) 
+  arguments = --work_dir_ext _$(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_public_databases
 endif
 
 queue directory matching job*
+
 

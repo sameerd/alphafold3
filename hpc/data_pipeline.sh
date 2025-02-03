@@ -53,6 +53,7 @@ while [[ $# -gt 0 ]]; do
       WORK_DIR_EXT="$2"
       printinfo "Setting WORK_DIR_EXT : ${WORK_DIR_EXT}"
       shift # past argument
+      shift # past value
       ;;
     -v|--verbose)
       VERBOSE=2
@@ -225,6 +226,8 @@ do
 done
 
 # clean up
+printverbose "Cleaning up working directory"
 rm -rf "${WORK_DIR}"
 rm -rf .bash_history .bashrc .lesshst .viminfo
+printverbose "Done"
 

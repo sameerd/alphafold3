@@ -1,4 +1,13 @@
 
+
+SCARCITY=
+ifneq (,$(findstring scarcity, ${HOSTNAME}))
+   SCARCITY="_scarcity"
+   $(info *********************************)
+   $(info ****** Running on Scarcity ******)
+   $(info *********************************)
+endif
+
 pass:
 
 clean:
@@ -8,16 +17,17 @@ deepclean: clean
 	rm -f *.tar.gz
 
 test_data_pipeline:
-	condor_submit USE_SMALL_DB=1 data_pipeline.sub	
+	condor_submit USE_SMALL_DB=1 data_pipeline$(SCARCITY).sub
 
 data_pipeline:
-	condor_submit data_pipeline.sub
+	condor_submit data_pipeline$(SCARCITY).sub
 
+# TODO: Fixme
 sweep_data_pipe_outputs:
-	mv *.data_pipeline.tar.gz inference_inputs/
+	/bin/bash sweep_data_pipe_outputs.sh
 
 inference_pipeline:
-	condor_submit inference_pipeline.sub	
+	condor_submit inference_pipeline$(SCARCITY).sub
 
 
 
