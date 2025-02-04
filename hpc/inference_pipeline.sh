@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
      -w|--work_dir_ext)
       WORK_DIR_EXT="$2"
-      printinfo "Setting WORK_DIR_EXT : ${WORK_DIR_EXT}"
+      printinfo "Setting WORK_DIR_EXT     : ${WORK_DIR_EXT}"
       shift # past argument
       shift # past value
       ;;
@@ -97,7 +97,7 @@ printinfo "Script dir     : $(dirname $0)"
 
 readonly WORK_DIR="work.${WORK_DIR_EXT}"
 
-printinfo "WORK_DIR   : `realpath $WORK_DIR`"
+printinfo "WORK_DIR       : `realpath $WORK_DIR`"
 printverbose "Creating workdir and subdirectories : ${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 pushd "${WORK_DIR}" > /dev/null

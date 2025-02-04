@@ -4,7 +4,7 @@
 # comment out the line above and uncomment the line below to run the scripts
 # inside the container. Also, remove the --container argument
 # from arguments
-container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.22Jan2025.sif
+container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.minimal.22Jan2025.sif
 
 executable = inference_pipeline.sh
 
@@ -23,8 +23,8 @@ when_to_transfer_output = ON_EXIT
 Requirements = (Target.HasCHTCStaging == true)
 
 request_memory = 16GB
-# need space for the container (5GB) as well
-request_disk = 8GB
+# need space for the container (3GB) as well
+request_disk = 5GB
 request_cpus = 4
 request_gpus = 1
 
