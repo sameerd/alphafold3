@@ -3,7 +3,7 @@
 #universe = vanilla
 # comment out the line above and uncomment the line below to run the scripts
 # inside the container. Remove the --container argument from arguments
-container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.22Jan2025.sif
+container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.minimal.22Jan2025.sif
 
 executable = data_pipeline.sh
 
@@ -26,15 +26,15 @@ if defined USE_SMALL_DB
   request_memory = 8GB
   request_disk = 16GB
   request_cpus = 4
-  arguments = --container alphafold3.22Jan2025.sif --smalldb --work_dir_ext _$(Cluster)_$(Process)
-#  arguments = --smalldb --work_dir_ext _$(Cluster)_$(Process)
+  arguments = --smalldb --work_dir_ext $(Cluster)_$(Process) --verbose
+#  arguments = --smalldb --work_dir_ext $(Cluster)_$(Process)
 else
   # full requirements
   request_memory = 8GB
   request_disk = 700GB
   request_cpus = 8
-  arguments = --container alphafold3.22Jan2025.sif --work_dir_ext _$(Cluster)_$(Proc) --extracted_database_path ~/databases/alphafold3_public_databases
-#  arguments = --work_dir_ext _$(Cluster)_$(Process) 
+  arguments = --work_dir_ext $(Cluster)_$(Proc) 
+#  arguments = --work_dir_ext $(Cluster)_$(Process) 
 endif
 
 queue directory matching job*

@@ -3,7 +3,7 @@
 #universe = vanilla
 # comment out the line above and uncomment the line below to run the scripts
 # inside the container. Remove the --container argument from arguments
-container_image = file:///mnt/bigdata/linuxhome/dcosta2/software/alphafold3/hpc/alphafold3.22Jan2025.sif
+container_image = file:///mnt/bigdata/linuxhome/dcosta2/software/alphafold3/hpc/alphafold3.minimal.22Jan2025sif
 
 executable = data_pipeline.sh
 
@@ -23,13 +23,13 @@ if defined USE_SMALL_DB
   request_memory = 8GB
   request_disk = 16GB
   request_cpus = 4
-  arguments = --smalldb --work_dir_ext _$(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_testing_databases
+  arguments = --smalldb --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_testing_databases
 else
   # full requirements
   request_memory = 8GB
   request_disk = 8GB
   request_cpus = 8
-  arguments = --work_dir_ext _$(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_public_databases
+  arguments = --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_public_databases
 endif
 
 queue directory matching job*

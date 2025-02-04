@@ -162,12 +162,17 @@ printinfo "IMG_EXE_CMD    : $IMG_EXE_CMD"
 if [ -z "$EXTRACTED_DATABASE_PATH" ] ; then
   printverbose "Preparing to extract the databases"
 
+  EXTRACTED_DATABASE_PATH="${WORK_DIR}/public_databases"
+  printinfo "EXTRACTED_DATABASE_PATH  : ${EXTRACTED_DATABASE_PATH}"
+
   ## prepare public_databases directory
   ## Will do 8 file copy/uncompress in parallel so we request 8 cpus
   printverbose "Start decompressing : pdb_2022_09_28_mmcif_files"
+  printinfo "STAGING_DB_DIR : $STAGING_DB_DIR"
   cat "${STAGING_DB_DIR}"/pdb_2022_09_28_mmcif_files.tar.zst | \
           ${IMGEXEC} tar --no-same-owner --no-same-permissions \
-          --use-compress-program=zstd -xf - --directory=public_databases/ &
+          --use-compress-program=zstd -xf - \
+          --directory="${EXTRACTED_DATABASE_PATH}/" &
   
   for NAME in mgy_clusters_2022_05.fa \
               bfd-first_non_consensus_sequences.fasta \
@@ -178,11 +183,10 @@ if [ -z "$EXTRACTED_DATABASE_PATH" ] ; then
               rfam_14_9_clust_seq_id_90_cov_80_rep_seq.fasta ; do
     printinfo "Start decompressing: '${NAME}'"
     cat "${STAGING_DB_DIR}/${NAME}.zst" | \
-        ${IMGEXEC} zstd --decompress > "public_databases/${NAME}" &
+        ${IMGEXEC} zstd --decompress > "${EXTRACTED_DATABASE_PATH}/${NAME}" &
   done
   
   wait # for all decompression to finish
-  EXTRACTED_DATABASE_PATH="${WORK_DIR}/public_databases"
   printverbose "Completed database installation"
 fi
 
