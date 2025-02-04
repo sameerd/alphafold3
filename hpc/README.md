@@ -92,6 +92,13 @@ sudo docker build -t alphafold3 -f docker/Dockerfile .
 # apptainer needs a lot less memory but needs around 30GB of disk space
 # mostly in it's tmp directory. Can be set with APPTAINER_CACHE and TMPDIR
 sudo apptainer build alphafold3.sif docker-daemon://alphafold3:latest
+
+
+# creating smaller singularity image without build components
+cd hpc
+sudo docker build -t alphafold3_minimal -f Dockerfile .
+sudo apptainer build alphafold3.minimal.sif \
+        docker-daemon://alphafold3_minimal:latest
 ```
 
 ### Creating small databases for testing
