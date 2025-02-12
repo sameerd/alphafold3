@@ -23,13 +23,13 @@ if defined USE_SMALL_DB
   request_memory = 8GB
   request_disk = 16GB
   request_cpus = 4
-  arguments = --smalldb --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_testing_databases
+  arguments = --smalldb --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_testing_databases --verbose --random_sleep_minutes 10
 else
   # full requirements
   request_memory = 8GB
   request_disk = 8GB
   request_cpus = 8
-  arguments = --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_public_databases
+  arguments = --work_dir_ext $(Cluster)_$(Process) --extracted_database_path $ENV(HOME)/databases/alphafold3_public_databases --random_sleep_minutes 10
 endif
 
 queue directory matching job*

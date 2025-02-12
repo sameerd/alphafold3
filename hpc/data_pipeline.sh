@@ -76,6 +76,14 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
+     -r|--random_sleep_minutes)
+      RANDOM_SLEEP_TIME="$2"
+      SLEEP_TIME=$(( RANDOM % RANDOM_SLEEP_TIME + 1 ))
+      printinfo "Sleeping for   : ${SLEEP_TIME} minutes"
+      sleep "${SLEEP_TIME}m"
+      shift # past argument
+      shift # past value
+      ;;
      --smalldb)
       DB_DIR_STUB=db_small
       shift # past argument
