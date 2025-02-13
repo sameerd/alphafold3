@@ -18,6 +18,8 @@ transfer_input_files = data_inputs/
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
+Requirements = (has_avx == true)
+
 if defined USE_SMALL_DB
   # testing requirements
   request_memory = 8GB

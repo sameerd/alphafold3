@@ -19,6 +19,8 @@ transfer_input_files = inference_inputs/
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 
+Requirements = (has_avx == true)
+
 request_memory = 16GB
 # need space for the container (3GB) as well
 request_disk = 8GB
