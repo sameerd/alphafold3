@@ -19,8 +19,14 @@ deepclean: clean
 test_data_pipeline:
 	condor_submit USE_SMALL_DB=1 data_pipeline$(SCARCITY).sub
 
+test_data_flock:
+	condor_submit USE_SMALL_DB=1 FLOCK=1 data_pipeline.sub
+
 data_pipeline:
 	condor_submit data_pipeline$(SCARCITY).sub
+
+flock_data_pipeline:
+	condor_submit FLOCK=1 data_pipeline.sub
 
 # TODO: Fixme
 sweep_data_pipe_outputs:

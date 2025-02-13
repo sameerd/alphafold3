@@ -21,6 +21,10 @@ when_to_transfer_output = ON_EXIT
 # We need this to transfer the databases to the execute node
 Requirements = (Target.HasCHTCStaging == true) && (has_avx == true)
 
+if defined FLOCK
++WantFlocking = True
+endif
+
 if defined USE_SMALL_DB
   # testing requirements
   request_memory = 8GB
