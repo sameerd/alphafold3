@@ -209,6 +209,9 @@ class ProteinChain:
   def templates(self) -> Sequence[Template] | None:
     return self._templates
 
+  def __len__(self) -> int:
+    return len(self._sequence)
+
   def __eq__(self, other: Self) -> bool:
     return (
         self._id == other._id
@@ -466,6 +469,9 @@ class RnaChain:
   def unpaired_msa(self) -> str | None:
     return self._unpaired_msa
 
+  def __len__(self) -> int:
+    return len(self._sequence)
+
   def __eq__(self, other: Self) -> bool:
     return (
         self._id == other._id
@@ -613,6 +619,9 @@ class DnaChain:
         for r in self.to_ccd_sequence()
     ])
 
+  def __len__(self) -> int:
+    return len(self._sequence)
+
   def __eq__(self, other: Self) -> bool:
     return (
         self._id == other._id
@@ -716,6 +725,12 @@ class Ligand:
     # Use hashable types for ccd_ids.
     if self.ccd_ids is not None:
       object.__setattr__(self, 'ccd_ids', tuple(self.ccd_ids))
+
+  def __len__(self) -> int:
+    if self.ccd_ids is not None:
+      return len(self.ccd_ids)
+    else:
+      return 1
 
   def hash_without_id(self) -> int:
     """Returns a hash ignoring the ID - useful for deduplication."""
@@ -1055,7 +1070,10 @@ class Input:
         else:
           raise ValueError(f'Unknown sequence type: {sequence}')
 
-    ligands = [chain for chain in chains if isinstance(chain, Ligand)]
+    smiles_ligand_ids = set(
+        c.id for c in chains if isinstance(c, Ligand) and c.smiles is not None
+    )
+    chain_lengths = {chain.id: len(chain) for chain in chains}
     bonded_atom_pairs = None
     if bonds := raw_json.get('bondedAtomPairs'):
       bonded_atom_pairs = []
@@ -1085,9 +1103,11 @@ class Input:
           )
         if bond_beg[0] not in flat_seq_ids or bond_end[0] not in flat_seq_ids:
           raise ValueError(f'Invalid chain ID(s) in bond {bond}')
-        if bond_beg[1] <= 0 or bond_end[1] <= 0:
+        if (
+            not 0 < bond_beg[1] <= chain_lengths[bond_beg[0]]
+            or not 0 < bond_end[1] <= chain_lengths[bond_end[0]]
+        ):
           raise ValueError(f'Invalid residue ID(s) in bond {bond}')
-        smiles_ligand_ids = set(l.id for l in ligands if l.smiles is not None)
         if bond_beg[0] in smiles_ligand_ids:
           raise ValueError(
               f'Bond {bond} involves an unsupported SMILES ligand {bond_beg[0]}'
@@ -1097,6 +1117,9 @@ class Input:
               f'Bond {bond} involves an unsupported SMILES ligand {bond_end[0]}'
           )
         bonded_atom_pairs.append((tuple(bond_beg), tuple(bond_end)))
+
+      if len(bonded_atom_pairs) != len(set(bonded_atom_pairs)):
+        raise ValueError(f'Bonds are not unique: {bonded_atom_pairs}')
 
     return cls(
         name=raw_json['name'],
