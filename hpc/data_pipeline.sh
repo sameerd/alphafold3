@@ -46,12 +46,19 @@ function printverbose() {
 }
 
 ARGS="$@"
+WORK_TMP_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
      -w|--work_dir_ext)
       WORK_DIR_EXT="$2"
       printinfo "Setting WORK_DIR_EXT : ${WORK_DIR_EXT}"
+      shift # past argument
+      shift # past value
+      ;;
+     -t|--tmpdir)
+      WORK_TMP_DIR="$2"
+      printinfo "Setting WORK_TMP_DIR : ${WORK_TMP_DIR}"
       shift # past argument
       shift # past value
       ;;
@@ -111,7 +118,14 @@ readonly STAGING_DB_DIR="${STAGING_DIR}/${DB_DIR_STUB}"
 
 readonly WORK_DIR="work.${WORK_DIR_EXT}"
 
-printinfo "WORK_DIR   : `realpath $WORK_DIR`"
+printinfo "WORK_DIR       : `realpath $WORK_DIR`"
+if [[ -n "${WORK_TMP_DIR}" ]] ; then
+  printinfo "WORK_TMP_DIR   : `realpath $WORK_TMP_DIR`"
+  if [ ! -d "${WORK_TMP_DIR}" ]; then
+    printerr "WORK_TMP_DIR does not exist : ${WORK_TMP_DIR}"
+    exit 1
+  fi
+fi
 printverbose "Creating workdir and subdirectories : ${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 pushd "${WORK_DIR}" > /dev/null
@@ -200,13 +214,18 @@ if [ -z "$EXTRACTED_DATABASE_PATH" ] ; then
 fi
 
 
+
 if [[ -n "$SINGIMG" ]] ; then
-  # TMPDIR is needed because jackhmmer sometimes runs out of space on /tmp
+  # TMPDIR is sometimes needed because jackhmmer sometimes runs out of 
+  # space on the regular tmp drive if too many sequences match
+  if [ -z "${WORK_TMP_DIR}" ] ; then
+    WORK_TMP_DIR="${WORK_DIR}/tmp"
+  fi
   apptainer exec \
     --bind "${WORK_DIR}/af_input":/root/af_input \
     --bind "${WORK_DIR}/af_output":/root/af_output \
     --bind "${WORK_DIR}/models":/root/models \
-    --bind "${WORK_DIR}/tmp":/root/tmp \
+    --bind "${WORK_TMP_DIR}":/root/tmp \
     --bind "${EXTRACTED_DATABASE_PATH}":/root/public_databases \
     --cwd /app/alphafold \
     ${SINGIMG} \
@@ -220,9 +239,14 @@ if [[ -n "$SINGIMG" ]] ; then
 else # we must already be in the container
   WORK_DIR_FULL_PATH=`realpath ${WORK_DIR}` # full path to working directory
   EXTRACTED_DATABASE_FULL_PATH=`realpath "${EXTRACTED_DATABASE_PATH}"`
-  pushd /app/alphafold
   # setting TMPDIR so jackhmmer doesn't run out of space
-  TMPDIR="${WORK_DIR_FULL_PATH}/tmp" python run_alphafold.py \
+  if [ -z "${WORK_TMP_DIR}" ] ; then
+    WORK_TMP_DIR="${WORK_DIR_FULL_PATH}/tmp"
+  else
+    WORK_TMP_DIR=`realpath ${WORK_TMP_DIR}`
+  fi
+  pushd /app/alphafold
+  TMPDIR="${WORK_TMP_DIR}" python run_alphafold.py \
        --db_dir="${EXTRACTED_DATABASE_FULL_PATH}" \
        --model_dir="${WORK_DIR_FULL_PATH}/models" \
        --run_data_pipeline=true \
