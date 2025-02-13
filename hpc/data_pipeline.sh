@@ -118,6 +118,7 @@ pushd "${WORK_DIR}" > /dev/null
 mkdir -p af_input af_output models public_databases tmp
 popd
 
+
 readonly WORK_INPUT_DIR="${WORK_DIR}/af_input"
 # prepare input directory
 if compgen -G "*.json"  > /dev/null; then
@@ -198,15 +199,18 @@ if [ -z "$EXTRACTED_DATABASE_PATH" ] ; then
   printverbose "Completed database installation"
 fi
 
+
 if [[ -n "$SINGIMG" ]] ; then
+  # TMPDIR is needed because jackhmmer sometimes runs out of space on /tmp
   apptainer exec \
     --bind "${WORK_DIR}/af_input":/root/af_input \
     --bind "${WORK_DIR}/af_output":/root/af_output \
     --bind "${WORK_DIR}/models":/root/models \
+    --bind "${WORK_DIR}/tmp":/root/tmp \
     --bind "${EXTRACTED_DATABASE_PATH}":/root/public_databases \
     --cwd /app/alphafold \
     ${SINGIMG} \
-    python run_alphafold.py \
+    TMPDIR=/root/tmp python run_alphafold.py \
     --db_dir=/root/public_databases \
     --run_data_pipeline=true \
     --run_inference=false \
@@ -217,7 +221,8 @@ else # we must already be in the container
   WORK_DIR_FULL_PATH=`realpath ${WORK_DIR}` # full path to working directory
   EXTRACTED_DATABASE_FULL_PATH=`realpath "${EXTRACTED_DATABASE_PATH}"`
   pushd /app/alphafold
-  python run_alphafold.py \
+  # setting TMPDIR so jackhmmer doesn't run out of space
+  TMPDIR="${WORK_DIR_FULL_PATH}/tmp" python run_alphafold.py \
        --db_dir="${EXTRACTED_DATABASE_FULL_PATH}" \
        --model_dir="${WORK_DIR_FULL_PATH}/models" \
        --run_data_pipeline=true \
