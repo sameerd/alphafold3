@@ -9,8 +9,8 @@ container_image = file:///staging/groups/glbrc_alphafold/af3/alphafold3.minimal.
 executable = inference_pipeline.sh
 
 log = ../logs/inference_pipeline.log
-output = ../logs/data_pipeline_$(Cluster)_$(Process).out
-error  = ../logs/data_pipeline_$(Cluster)_$(Process).err
+output = ../logs/inference_pipeline_$(Cluster)_$(Process).out
+error  = ../logs/inference_pipeline_$(Cluster)_$(Process).err
 
 initialdir = $(directory)
 # transfer all files in the inference_inputs directory
