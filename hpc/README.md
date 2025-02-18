@@ -27,7 +27,7 @@ apptainer container (5GB) in two pipelines.
   directories [job1/data_inputs](./job1/data_inputs/) and
   [job1/inference_inputs](./job1/inference_inputs/) and also create multiple
   `job` directories and run them all at the same time.
-* **Avoid coping data**: The apptainer container and the databases in
+* **Avoid copying data**: The apptainer container and the databases in
   `/staging/groups/glbrc_alphafold/af3/` are created and downloaded from public
   sources and are readable by anyone who can access the staging directory. This
   is done so that there is no need to make any copies of this data on the
@@ -60,15 +60,66 @@ apptainer container (5GB) in two pipelines.
 6. Run a test with the small databases first
    ```shell
    condor_submit USE_SMALL_DB=1 data_pipeline.sub
-   # check and then delete test output files
    ```
-7. If everything looks good, then run the full data pipeline and inference
-   pipeline
-   ```shell
+
+   Check and then delete test output files. You will find a file named `2pv7.data_pipeline.tar.gz` located under `job1/2pv7.data_pipeline.tar.gz`
+
+   Unzip the file and take a look at its contents:
+   ```
+   cd job1
+   tar xvf 2pv7.data_pipeline.tar.gz
+   cat cat job1/2pv7_data.json
+   ```
+
+You should see this:
+```
+{
+  "dialect": "alphafold3",
+  "version": 2,
+  "name": "2PV7",
+  "sequences": [
+    {
+      "protein": {
+        "id": [
+          "A",
+          "B"
+        ],
+        "sequence": "GMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG",
+        "modifications": [],
+        "unpairedMsa": ">query\nGMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG\n",
+        "pairedMsa": ">query\nGMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG\n",
+        "templates": []
+      }
+    }
+  ],
+  "modelSeeds": [
+    1
+  ],
+  "bondedAtomPairs": null,
+  "userCCD": null
+}
+```
+
+7. If the file `job1/2pv7_data.json` looks ok, proceed to run the `data_pipeline.sub` on the whole dataset.
+
+   ```
    condor_submit data_pipeline.sub
-   mv *.data_pipeline.tar.gz inference_inputs/
-   condor_submit inference_pipeline.sub
    ```
+8. This will create a `job1/2pv7.data_pipeline.tar.gz` file.
+
+Note the time stamp, and likely larger file size. Move it to the `job1/inference_inputs` folder:
+
+```
+mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
+```
+   
+10. The run inference pipeline:
+
+   ```shell
+condor_submit inference_pipeline.sub
+   ```
+
+The expected output is [...]
 
 ## Notes on recreating steps used to create these instructions
 
