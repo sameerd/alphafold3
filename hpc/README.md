@@ -138,6 +138,36 @@ seed-1_sample-4
 TERMS_OF_USE.md
 ```
 
+
+## What to do next?
+
+### Run this on multiple sequences
+
+
+### Visualize the model results (`.cif`) files
+
+To visualize the model results (`.cif`) file you will need a program like PyMol.
+UW-Madison researchers can go to software.wisc.edu, login with their netID and password, and search for PyMol. In the download options, you can download the software (for your Windows, Mac or Linux) computer *and* there is a link to the license ("PyMOL License File - 3.0 Version or Later"). 
+
+Download and Install Pymol.
+Choose your license (the `.lic`) file you just downloaded.
+
+Get a copy of the `cif` file off of CHTC:
+
+In a new terminal window type
+```
+cd ~/Downloads
+sftp netid@ap2002.chtc.wisc.edu
+# navigate to the alphafold3 output folder
+# For example:
+cd ~/AF3/job1
+get 2pv7_model.cif
+exit
+```
+The cif file will be downloaded to your Downloads folder on your computer.
+
+Open PyMol. Click on File > Open > Choose the cif file.
+
 ## Notes on recreating steps used to create these instructions
 
 These notes below are only needed in case someone wants to recreate building
@@ -168,6 +198,8 @@ sudo docker build -t alphafold3_minimal -f Dockerfile .
 sudo apptainer build alphafold3.minimal.sif \
         docker-daemon://alphafold3_minimal:latest
 ```
+
+
 
 ### Creating small databases for testing
 
