@@ -19,7 +19,7 @@ apptainer container (5GB) in two pipelines.
   parameters to your own staging directory. Make sure that this file is
   protected by your own file permissions `chmod 600 af3.bin*` and then
   edit `MODEL_PARAM_FILE` variable in the
-  [inference pipeline execute script](./inference_pipeline.sh) to point to it.
+  [inference pipeline execute script](./inference_pipeline.sh) to point to it, and also in the [inference pipeline submit script](./inference_pipeline.sub)
 * **Batch jobs to avoid using excess CHTC resouces**: Contrary to the usual CHTC
   approach of slicing jobs finely we need to batch jobs as much as possible to
   avoid transferring too much data to/from the staging directory. It is
@@ -51,7 +51,7 @@ apptainer container (5GB) in two pipelines.
    ```shell
     mkdir -p job1/data_inputs job1/inference_inputs
    ```
-4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sh` to point
+4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sh` and `inference_pipeline.sub` to point
    to the model parameters you got from Google Deepmind in Step 1.
 5. Put the config `json` files in the in the [job1/data_inputs/](./job1/data_inputs/)
    directory. An example config to test is available as
