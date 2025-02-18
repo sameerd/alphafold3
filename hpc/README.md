@@ -119,7 +119,24 @@ mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
 condor_submit inference_pipeline.sub
    ```
 
-The expected output is [...]
+The output will be a file named `.inference_pipeline.tar.gz`. Once unzipped, it should contain the follow files:
+
+```
+2pv7.inference_pipeline.tar.gz
+
+# Unzipped
+2pv7_confidences.json
+2pv7_data.json
+2pv7_model.cif
+2pv7_summary_confidences.json
+ranking_scores.csv
+seed-1_sample-0
+seed-1_sample-1
+seed-1_sample-2
+seed-1_sample-3
+seed-1_sample-4
+TERMS_OF_USE.md
+```
 
 ## Notes on recreating steps used to create these instructions
 
