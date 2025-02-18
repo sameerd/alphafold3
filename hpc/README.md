@@ -143,6 +143,39 @@ TERMS_OF_USE.md
 
 ### Run this on multiple sequences
 
+Given a multifasta file, where each is a sequence to be predicted, the script [set_up_directory.py](./set_up_directory.py) can be used to automatically create the folder structure for the data_pipeline.sub to run.
+
+1. Download a copy of set_up_directory.py and make it executable:
+
+```
+wget [...]
+chmod +x set_up_directory.py
+```
+
+2. Use the python script directly from the access point:
+```
+python set_up_directory.py test.fasta
+```
+
+3. Run the data_pipeline.sub script:
+```
+condor_submit data_pipeline.sub
+```
+
+Since the queue statement stays queue directory from job*, it automatically knows to submit a job for each folder started with the naming pattern "job".
+
+4. Move the tar.gz file into the inference_input folders.
+A tar.gz file is created under `jobN`, but they all need to be moved to `jobN/inference_inputs/.`
+
+```
+TO DO 
+```
+
+5. Run the inference script for all the samples:
+```
+condor_submit inference_pipeline.sub
+```
+
 
 ### Visualize the model results (`.cif`) files
 
