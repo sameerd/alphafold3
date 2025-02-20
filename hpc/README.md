@@ -69,10 +69,11 @@ apptainer container (5GB) in two pipelines.
    ```
    cd job1
    tar xvf 2pv7.data_pipeline.tar.gz
-   cat cat job1/2pv7_data.json
+   cat job1/2pv7_data.json
    ```
 
 You should see this:
+
 ```
 {
   "dialect": "alphafold3",
@@ -106,18 +107,19 @@ You should see this:
    ```
    condor_submit data_pipeline.sub
    ```
+   
 8. This will create a `job1/2pv7.data_pipeline.tar.gz` file.
 
 Note the time stamp, and likely larger file size. Move it to the `job1/inference_inputs` folder:
 
-```
-mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
-```
+   ```
+   mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
+   ```
 
 9. The run inference pipeline:
 
-   ```shell
-condor_submit inference_pipeline.sub
+   ```
+   condor_submit inference_pipeline.sub
    ```
 
 The output will be a file named `.inference_pipeline.tar.gz`. Once unzipped, it should contain the follow files:
