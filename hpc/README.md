@@ -18,8 +18,7 @@ apptainer container (5GB) in two pipelines.
   has terms of use and you need to agree to these, download and save the
   parameters to your own staging directory. Make sure that this file is
   protected by your own file permissions `chmod 600 af3.bin*` and then
-  edit `MODEL_PARAM_FILE` variable in the
-  [inference pipeline execute script](./inference_pipeline.sh) to point to it, and also in the [inference pipeline submit script](./inference_pipeline.sub)
+  edit `MODEL_PARAM_FILE` variable in the in the [inference pipeline submit script](./inference_pipeline.sub)
 * **Batch jobs to avoid using excess CHTC resouces**: Contrary to the usual CHTC
   approach of slicing jobs finely we need to batch jobs as much as possible to
   avoid transferring too much data to/from the staging directory. It is
@@ -51,12 +50,14 @@ apptainer container (5GB) in two pipelines.
    ```shell
     mkdir -p job1/data_inputs job1/inference_inputs
    ```
-4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sh` and `inference_pipeline.sub` to point
+4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sub` to point
    to the model parameters you got from Google Deepmind in Step 1.
+
 5. Put the config `json` files in the in the [job1/data_inputs/](./job1/data_inputs/)
    directory. An example config to test is available as
    [`fold_input.json`](./test/input/fold_input.json) in
    the [(README.md file for Alphafold3](../README.md)
+
 6. Run a test with the small databases first
    ```shell
    condor_submit USE_SMALL_DB=1 data_pipeline.sub
@@ -112,8 +113,8 @@ Note the time stamp, and likely larger file size. Move it to the `job1/inference
 ```
 mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
 ```
-   
-10. The run inference pipeline:
+
+9. The run inference pipeline:
 
    ```shell
 condor_submit inference_pipeline.sub
@@ -144,8 +145,9 @@ TERMS_OF_USE.md
 ### Run this on multiple sequences
 
 Given a multifasta file, where each is a sequence to be predicted, the script [set_up_directory.py](./set_up_directory.py) can be used to automatically create the folder structure for the data_pipeline.sub to run.
+The python scripts takes in 2 arguments: the fasta file, and a batch_size. The batch sized number is used to determine how many `.json` files are created under each `jobN` directory.
 
-1. Download a copy of set_up_directory.py and make it executable:
+1. Download a copy of `set_up_directory.py` and make it executable:
 
 ```
 wget [...]
@@ -154,7 +156,7 @@ chmod +x set_up_directory.py
 
 2. Use the python script directly from the access point:
 ```
-python set_up_directory.py test.fasta
+python set_up_directory.py test.fasta 10
 ```
 
 3. Run the data_pipeline.sub script:
@@ -165,13 +167,19 @@ condor_submit data_pipeline.sub
 Since the queue statement stays queue directory from job*, it automatically knows to submit a job for each folder started with the naming pattern "job".
 
 4. Move the tar.gz file into the inference_input folders.
-A tar.gz file is created under `jobN`, but they all need to be moved to `jobN/inference_inputs/.`
+A (or multiple) tar.gz file is created under `jobN`, but they all need to be moved to `jobN/inference_inputs/.`
 
 ```
-TO DO 
+for dir in job*/; do mv "$dir"*.tar.gz "$dir"inference_inputs/; done
+```
+
+List the directory contents to make sure files have been moved properly:
+```
+ls job*/inference_inputs/
 ```
 
 5. Run the inference script for all the samples:
+# NOTE : TO TEST
 ```
 condor_submit inference_pipeline.sub
 ```
