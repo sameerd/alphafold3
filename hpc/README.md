@@ -18,8 +18,7 @@ apptainer container (5GB) in two pipelines.
   has terms of use and you need to agree to these, download and save the
   parameters to your own staging directory. Make sure that this file is
   protected by your own file permissions `chmod 600 af3.bin*` and then
-  edit `MODEL_PARAM_FILE` variable in the
-  [inference pipeline execute script](./inference_pipeline.sh) to point to it.
+  edit `MODEL_PARAM_FILE` variable in the in the [inference pipeline submit script](./inference_pipeline.sub)
 * **Batch jobs to avoid using excess CHTC resouces**: Contrary to the usual CHTC
   approach of slicing jobs finely we need to batch jobs as much as possible to
   avoid transferring too much data to/from the staging directory. It is
@@ -27,7 +26,7 @@ apptainer container (5GB) in two pipelines.
   directories [job1/data_inputs](./job1/data_inputs/) and
   [job1/inference_inputs](./job1/inference_inputs/) and also create multiple
   `job` directories and run them all at the same time.
-* **Avoid coping data**: The apptainer container and the databases in
+* **Avoid copying data**: The apptainer container and the databases in
   `/staging/groups/glbrc_alphafold/af3/` are created and downloaded from public
   sources and are readable by anyone who can access the staging directory. This
   is done so that there is no need to make any copies of this data on the
@@ -51,24 +50,166 @@ apptainer container (5GB) in two pipelines.
    ```shell
     mkdir -p job1/data_inputs job1/inference_inputs
    ```
-4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sh` to point
+4. Edit the `MODEL_PARAM_FILE` variable in `inference_pipeline.sub` to point
    to the model parameters you got from Google Deepmind in Step 1.
+
 5. Put the config `json` files in the in the [job1/data_inputs/](./job1/data_inputs/)
    directory. An example config to test is available as
    [`fold_input.json`](./test/input/fold_input.json) in
    the [(README.md file for Alphafold3](../README.md)
+
 6. Run a test with the small databases first
    ```shell
    condor_submit USE_SMALL_DB=1 data_pipeline.sub
-   # check and then delete test output files
    ```
-7. If everything looks good, then run the full data pipeline and inference
-   pipeline
-   ```shell
+
+   Check and then delete test output files. You will find a file named `2pv7.data_pipeline.tar.gz` located under `job1/2pv7.data_pipeline.tar.gz`
+
+   Unzip the file and take a look at its contents:
+   ```
+   cd job1
+   tar xvf 2pv7.data_pipeline.tar.gz
+   cat job1/2pv7_data.json
+   ```
+
+You should see this:
+
+```
+{
+  "dialect": "alphafold3",
+  "version": 2,
+  "name": "2PV7",
+  "sequences": [
+    {
+      "protein": {
+        "id": [
+          "A",
+          "B"
+        ],
+        "sequence": "GMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG",
+        "modifications": [],
+        "unpairedMsa": ">query\nGMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG\n",
+        "pairedMsa": ">query\nGMRESYANENQFGFKTINSDIHKIVIVGGYGKLGGLFARYLRASGYPISILDREDWAVAESILANADVVIVSVPINLTLETIERLKPYLTENMLLADLTSVKREPLAKMLEVHTGAVLGLHPMFGADIASMAKQVVVRCDGRFPERYEWLLEQIQIWGAKIYQTNATEHDHNMTYIQALRHFSTFANGLHLSKQPINLANLLALSSPIYRLELAMIGRLFAQDAELYADIIMDKSENLAVIETLKQTYDEALTFFENNDRQGFIDAFHKVRDWFGDYSEQFLKESRQLLQQANDLKQG\n",
+        "templates": []
+      }
+    }
+  ],
+  "modelSeeds": [
+    1
+  ],
+  "bondedAtomPairs": null,
+  "userCCD": null
+}
+```
+
+7. If the file `job1/2pv7_data.json` looks ok, proceed to run the `data_pipeline.sub` on the whole dataset.
+
+   ```
    condor_submit data_pipeline.sub
-   mv *.data_pipeline.tar.gz inference_inputs/
+   ```
+   
+8. This will create a `job1/2pv7.data_pipeline.tar.gz` file.
+
+Note the time stamp, and likely larger file size. Move it to the `job1/inference_inputs` folder:
+
+   ```
+   mv job1/*.data_pipeline.tar.gz job1/inference_inputs/.
+   ```
+
+9. The run inference pipeline:
+
+   ```
    condor_submit inference_pipeline.sub
    ```
+
+The output will be a file named `.inference_pipeline.tar.gz`. Once unzipped, it should contain the follow files:
+
+```
+2pv7.inference_pipeline.tar.gz
+
+# Unzipped
+2pv7_confidences.json
+2pv7_data.json
+2pv7_model.cif
+2pv7_summary_confidences.json
+ranking_scores.csv
+seed-1_sample-0
+seed-1_sample-1
+seed-1_sample-2
+seed-1_sample-3
+seed-1_sample-4
+TERMS_OF_USE.md
+```
+
+
+## What to do next?
+
+### Run this on multiple sequences
+
+Given a multifasta file, where each is a sequence to be predicted, the script [set_up_directory.py](./set_up_directory.py) can be used to automatically create the folder structure for the data_pipeline.sub to run.
+The python scripts takes in 2 arguments: the fasta file, and a batch_size. The batch sized number is used to determine how many `.json` files are created under each `jobN` directory.
+
+1. Download a copy of `set_up_directory.py` and make it executable:
+
+```
+wget [...]
+chmod +x set_up_directory.py
+```
+
+2. Use the python script directly from the access point:
+```
+python set_up_directory.py test.fasta 10
+```
+
+3. Run the data_pipeline.sub script:
+```
+condor_submit data_pipeline.sub
+```
+
+Since the queue statement stays queue directory from job*, it automatically knows to submit a job for each folder started with the naming pattern "job".
+
+4. Move the tar.gz file into the inference_input folders.
+A (or multiple) tar.gz file is created under `jobN`, but they all need to be moved to `jobN/inference_inputs/.`
+
+```
+for dir in job*/; do mv "$dir"*.tar.gz "$dir"inference_inputs/; done
+```
+
+List the directory contents to make sure files have been moved properly:
+```
+ls job*/inference_inputs/
+```
+
+5. Run the inference script for all the samples:
+# NOTE : TO TEST
+```
+condor_submit inference_pipeline.sub
+```
+
+
+### Visualize the model results (`.cif`) files
+
+To visualize the model results (`.cif`) file you will need a program like PyMol.
+UW-Madison researchers can go to software.wisc.edu, login with their netID and password, and search for PyMol. In the download options, you can download the software (for your Windows, Mac or Linux) computer *and* there is a link to the license ("PyMOL License File - 3.0 Version or Later"). 
+
+Download and Install Pymol.
+Choose your license (the `.lic`) file you just downloaded.
+
+Get a copy of the `cif` file off of CHTC:
+
+In a new terminal window type
+```
+cd ~/Downloads
+sftp netid@ap2002.chtc.wisc.edu
+# navigate to the alphafold3 output folder
+# For example:
+cd ~/AF3/job1
+get 2pv7_model.cif
+exit
+```
+The cif file will be downloaded to your Downloads folder on your computer.
+
+Open PyMol. Click on File > Open > Choose the cif file.
 
 ## Notes on recreating steps used to create these instructions
 
@@ -100,6 +241,8 @@ sudo docker build -t alphafold3_minimal -f Dockerfile .
 sudo apptainer build alphafold3.minimal.sif \
         docker-daemon://alphafold3_minimal:latest
 ```
+
+
 
 ### Creating small databases for testing
 
