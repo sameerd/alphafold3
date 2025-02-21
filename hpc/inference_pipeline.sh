@@ -15,7 +15,7 @@ SINGIMG=""
 # This file should be protected by your staging dir unix permissions
 # can also set it with --model_param_file script option 
 # or change it in the line below
-# MODEL_PARAM_FILE=/staging/USERNAME/af3/weights/af3.bin.zst
+MODEL_PARAM_FILE=/staging/dcosta2/af3/weights/af3.bin
 
 # By default we copy containers and params to a working directory 
 # on the local execute node. If working off a single file system 
