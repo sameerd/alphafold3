@@ -4,7 +4,7 @@
 # comment out the line above and uncomment the line below to run the scripts
 # inside the container. Also, remove the --container argument
 # from arguments
-container_image = file:///mnt/bigdata/linuxhome/dcosta2/software/alphafold3/hpc/alphafold3.minimal.22Jan2025.sif
+container_image = file:///mnt/bigdata/processed_data/computational_biology/containers/alphafold3/alphafold3.minimal.22Jan2025.sif
 
 executable = inference_pipeline.sh
 
