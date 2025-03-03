@@ -33,7 +33,8 @@ request_gpus = 1
 # in inference_pipeline.sh
 gpus_minimum_capability = 7.0
 
-# need more GPU memory for larger jobs
+# need more GPU memory for larger jobs ( approx >650 tokens in any inference )
+#gpus_minimum_memory = 20000
 
 # short jobs 4-6 hours so it is okay to use is_resumable
 +GPUJobLength = "short"
