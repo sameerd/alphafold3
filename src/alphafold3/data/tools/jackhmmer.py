@@ -75,7 +75,13 @@ class Jackhmmer(msa_tool.MsaTool):
 
   def query(self, target_sequence: str) -> msa_tool.MsaToolResult:
     """Queries the database using Jackhmmer."""
-    logging.info('Query sequence: %s', target_sequence)
+    logging.info(
+        'Query sequence: %s',
+        target_sequence
+        if len(target_sequence) <= 16
+        else f'{target_sequence[:16]}... (len {len(target_sequence)})',
+    )
+
     with tempfile.TemporaryDirectory() as query_tmp_dir:
       input_fasta_path = os.path.join(query_tmp_dir, 'query.fasta')
       subprocess_utils.create_query_fasta_file(

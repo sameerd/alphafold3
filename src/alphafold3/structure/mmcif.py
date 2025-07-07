@@ -115,14 +115,6 @@ def parse_multi_data_cif(cif_string: str) -> dict[str, Mmcif]:
   return cif_dict.parse_multi_data_cif(cif_string)
 
 
-def tokenize(mmcif_string: str) -> list[str]:
-  return cif_dict.tokenize(mmcif_string)
-
-
-def split_line(line: str) -> list[str]:
-  return cif_dict.split_line(line)
-
-
 class BondParsingError(Exception):
   """Exception raised by errors when getting bond atom indices."""
 

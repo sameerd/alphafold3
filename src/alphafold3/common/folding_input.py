@@ -345,6 +345,10 @@ class ProteinChain:
     else:
       templates = []
       for raw_template in raw_templates:
+        _validate_keys(
+            raw_template.keys(),
+            {'mmcif', 'mmcifPath', 'queryIndices', 'templateIndices'},
+        )
         mmcif = raw_template.get('mmcif', None)
         mmcif_path = raw_template.get('mmcifPath', None)
         if mmcif and mmcif_path:
@@ -783,11 +787,17 @@ class Ligand:
     if json_dict.get('ccdCodes') and json_dict.get('smiles'):
       raise ValueError(
           'Ligand cannot have both CCD code and SMILES set at the same time, '
-          f'got CCD: {json_dict["ccdCode"]} and SMILES: {json_dict["smiles"]}'
+          f'got CCD: {json_dict["ccdCodes"]} and SMILES: {json_dict["smiles"]}'
       )
 
     if 'ccdCodes' in json_dict:
-      return cls(id=seq_id or json_dict['id'], ccd_ids=json_dict['ccdCodes'])
+      ccd_codes = json_dict['ccdCodes']
+      if not isinstance(ccd_codes, (list, tuple)):
+        raise ValueError(
+            'CCD codes must be a list of strings, got '
+            f'{type(ccd_codes).__name__} instead: {ccd_codes}'
+        )
+      return cls(id=seq_id or json_dict['id'], ccd_ids=ccd_codes)
     elif 'smiles' in json_dict:
       return cls(id=seq_id or json_dict['id'], smiles=json_dict['smiles'])
     else:
@@ -1333,18 +1343,17 @@ class Input:
             (chain_indices[bond_end[0]], bond_end[1] - 1, bond_end[2]),
         ))
 
-    struc = structure.from_sequences_and_bonds(
+    return structure.from_sequences_and_bonds(
         sequences=sequences,
         chain_types=poly_types,
         sequence_formats=formats,
+        chain_ids=ids,
         bonded_atom_pairs=bonded_atom_pairs,
         ccd=ccd,
         name=self.sanitised_name(),
         bond_type=mmcif_names.COVALENT_BOND,
         release_date=None,
     )
-    # Rename chain IDs to the original ones.
-    return struc.rename_chain_ids(dict(zip(struc.chains, ids, strict=True)))
 
   def to_json(self) -> str:
     """Converts Input to an AlphaFold JSON."""

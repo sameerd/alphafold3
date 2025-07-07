@@ -31,7 +31,6 @@ from alphafold3.constants import chemical_components
 from alphafold3.data import featurisation
 from alphafold3.data import pipeline
 from alphafold3.model.atom_layout import atom_layout
-from alphafold3.structure import test_utils
 import jax
 import numpy as np
 
@@ -98,7 +97,7 @@ def _generate_diff(actual: str, expected: str) -> str:
   )
 
 
-class DataPipelineTest(test_utils.StructureTestCase):
+class DataPipelineTest(parameterized.TestCase):
   """Test AlphaFold 3 inference."""
 
   def setUp(self):

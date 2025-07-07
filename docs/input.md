@@ -404,10 +404,11 @@ the paper.
 
 RNA `unpairedMsa` can be either:
 
-1.  Unset (or set explicitly to `null`). AlphaFold 3 won't build MSA for this
-    RNA chain.
-2.  Set to an empty string (`""`). AlphaFold 3 won't build MSA and will run
-    MSA-free for this RNA chain.
+1.  Unset (or set explicitly to `null`). AlphaFold 3 will build MSA for this RNA
+    chain automatically. This is the recommended option.
+2.  Set to an empty string (`""`). AlphaFold 3 won't build the MSA for this RNA
+    chain and the MSA input to the model will be just the RNA chain (equivalent
+    to running MSA-free for this RNA chain).
 3.  Set to a non-empty A3M string. AlphaFold 3 will use the provided MSA for
     this RNA chain.
 
@@ -418,7 +419,7 @@ unpaired MSA (see [MSA Pairing](#msa-pairing) below for more details).
 
 The following combinations are valid for a given protein chain:
 
-1.  Both `unpairedMsa` and `pairedMsa` fields are unset (or explicitly set to
+1.  Both `unpairedMsa` and `pairedMsa` fields are unset (or set explicitly to
     `null`), AlphaFold 3 will build both MSAs automatically. This is the
     recommended option.
 2.  The `unpairedMsa` is set to to a non-empty A3M string, `pairedMsa` set to an
@@ -486,6 +487,12 @@ opposed to relying on name-matching post-processing heuristics used for
 When setting `unpairedMsa` manually, the `pairedMsa` must be explicitly set to
 an empty string (`""`).
 
+Make sure to run with `--resolve_msa_overlaps=false`. This prevents
+deduplication of the unpaired MSA within each chain against the paired MSA
+sequences. Even if you set `pairedMsa` to an empty string, the query sequence(s)
+will still be added in there and the deduplication procedure could destroy the
+carefully crafted sequence positioning in the unpaired MSA.
+
 For instance, if there are two chains `DEEP` and `MIND` which we want to be
 paired on organism A and C, we can achieve it as follows:
 
@@ -551,7 +558,9 @@ The fields specify the following:
 *   `queryIndices: list[int]`: O-based indices in the query sequence, defining
     the mapping from query residues to template residues.
 *   `templateIndices: list[int]`: O-based indices in the template sequence,
-    defining the mapping from query residues to template residues.
+    specifying the mapping from query residues to template residues defined in
+    the mmCIF file. Note that unresolved mmCIF residues must be taken into
+    account when specifying template indices.
 
 A template is specified as an mmCIF string containing a single chain with the
 structural template together with a 0-based mapping that maps query residue
@@ -563,6 +572,14 @@ you would specify the two indices lists as:
 "queryIndices":    [0, 1, 2, 3],
 "templateIndices": [0, 2, 5, 6]
 ```
+
+Note that mmCIFs can have residues with missing atom coordinates (present in
+residue tables but missing in the `_atom_site` table) – these must be taken into
+account when specifying template indices. E.g. to align residues 4–7 in a
+template with unresolved residues 1, 2, 3 and resolved residues 4, 5, 6, 7, you
+need to set the template indices to 3, 4, 5, 6 (since 0-based indexing is used).
+An example of a protein with unresolved residues 1–20 can be found here:
+https://www.rcsb.org/structure/8UXY.
 
 You can provide multiple structural templates. Note that if an mmCIF containing
 more than one chain is provided, you will get an error since it is not possible
@@ -903,6 +920,7 @@ certain fields and the sequences are not biologically meaningful.
           {"ptmType": "P1L", "ptmPosition": 5}
         ],
         "unpairedMsa": ...,
+        "pairedMsa": ""
       }
     },
     {
